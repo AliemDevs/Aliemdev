@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comentarios</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e9ecef;
+            margin: 0;
+            padding: 20px;
+            background-image: linear-gradient(to left,#00ffd2,gold);
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #495057;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, textarea {
+            width: 90%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease-in-out;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #80bdff;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        /* Estilos para la sección de comentarios */
+        #commentsSection {
+            margin-top: 40px;
+        }
+
+        #commentsList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #commentsList li {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        #commentsList li::before {
+            content: "•";
+            color: #007bff;
+            font-size: 24px;
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .comment-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .comment-text {
+            color: #555;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            input, textarea, button {
+                font-size: 14px;
+            }
+
+            h1, h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<script src="https://kit.fontawesome.com/f6a5a744b9.js" crossorigin="anonymous"></script>
+<body>
+    <div class="container">
+        <i style="color: green" class="fa-regular fa-alien"></i>
+        <h1>Deja tu comentario</h1>
+        <form id="commentForm">
+            <label for="name">Nombre:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="comment">Comentario:</label>
+            <textarea id="comment" name="comment" rows="4" required></textarea>
+
+            <button type="submit" name="send" id="send-m">Enviar</button>
+        </form>
+        <div id="commentsSection">
+            <h2>Comentarios:</h2>
+            <ul id="commentsList"></ul>
+        </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+      import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyD8SaE4mUBwoFH6yAOVh3gh3zYVYrlCc1o",
+        authDomain: "coment-12329.firebaseapp.com",
+        projectId: "coment-12329",
+        storageBucket: "coment-12329.appspot.com",
+        messagingSenderId: "666392137386",
+        appId: "1:666392137386:web:823b6b17352804a518cad3",
+        measurementId: "G-N7QDCXQQB1"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // Evento del formulario para enviar comentarios
+      document.getElementById("commentForm").addEventListener("submit", function(event) {
+          event.preventDefault();  // Prevenir el comportamiento por defecto del formulario
+
+          var name = document.getElementById("name").value;
+          var comment = document.getElementById("comment").value;
+          var timestamp = new Date().getTime();
+
+          if (name && comment) {
+              set(ref(db, 'commentsList/' + timestamp), {
+                  name: name,
+                  comment: comment
+              })
+              .then(() => {
+                  // Limpiar campos tras enviar el comentario
+                  document.getElementById("name").value = "";
+                  document.getElementById("comment").value = "";
+                  alert("Comentario enviado exitosamente!");
+              })
+              .catch((error) => {
+                  alert("Error al enviar el comentario: " + error);
+              });
+          } else {
+              alert("Por favor, complete todos los campos.");
+          }
+      });
+
+      // Mostrar comentarios en tiempo real
+      const commentsRef = ref(db, 'commentsList');
+      onValue(commentsRef, (snapshot) => {
+          const commentsList = document.getElementById("commentsList");
+          commentsList.innerHTML = "";  // Limpiar la lista antes de actualizarla
+
+          const data = snapshot.val();
+          for (let key in data) {
+              let commentItem = document.createElement("li");
+
+              let nameElem = document.createElement("div");
+              nameElem.classList.add("comment-name");
+              nameElem.textContent = data[key].sender;
+
+              let commentElem = document.createElement("div");
+              commentElem.classList.add("comment-text");
+              commentElem.textContent = data[key].comment;
+
+              commentItem.appendChild(nameElem);
+              commentItem.appendChild(commentElem);
+
+              commentsList.appendChild(commentItem);
+          }
+      });
+    </script>
+</body>
+  </html>
